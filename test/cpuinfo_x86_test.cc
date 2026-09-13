@@ -206,6 +206,24 @@ TEST_F(CpuidX86Test, SandyBridgeTestOsSupport) {
   EXPECT_TRUE(GetX86Info().features.avx);
 }
 
+TEST_F(CpuidX86Test, VexFeaturesRequireOsSupport) {
+  cpu().SetLeaves({
+      {{0x00000000, 0}, Leaf{0x0000000D, 0x756E6547, 0x6C65746E, 0x49656E69}},
+      // XSAVE, OSXSAVE, AVX, and F16C.
+      {{0x00000001, 0}, Leaf{0, 0, 0x3C000000, 0}},
+      // VAES and VPCLMULQDQ.
+      {{0x00000007, 0}, Leaf{0, 0, 0x00000600, 0}},
+  });
+  cpu().SetOsBackupsExtendedRegisters(false);
+  EXPECT_FALSE(GetX86Info().features.f16c);
+  EXPECT_FALSE(GetX86Info().features.vaes);
+  EXPECT_FALSE(GetX86Info().features.vpclmulqdq);
+  cpu().SetOsBackupsExtendedRegisters(true);
+  EXPECT_TRUE(GetX86Info().features.f16c);
+  EXPECT_TRUE(GetX86Info().features.vaes);
+  EXPECT_TRUE(GetX86Info().features.vpclmulqdq);
+}
+
 TEST_F(CpuidX86Test, SkyLake) {
   cpu().SetOsBackupsExtendedRegisters(true);
   cpu().SetLeaves({
